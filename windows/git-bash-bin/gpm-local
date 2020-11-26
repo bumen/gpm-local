@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+
+set -eu
+
+## Functions/
+usage() {
+cat << EOF
+SYNOPSIS
+
+    gpm-local provides commands for setting build information about the
+    local repository.
+
+    These tools are useful for working with Gopath discrepancies where
+    the native GPM/GVP path may not reflect the full package name of
+    your local package.
+
+    ABOUT LOCAL NAME
+
+    One of the main features of this extension is its ability to set the
+    local package name. This is useful in cases where your local package
+    is named something like "github.com/foo/bar" and you have
+    subpackages (such as "github/foo/bar/baz").
+
+    "gpm local name" sets a symbolic link in the GOPATH that will let
+    the go tools correctly resolve the current app's package and subpackage
+    names.
+
+
+USAGE
+      $ gpm local name bitbucket.org/foo/bar   # Set the local repo name
+                                               # to bitbucket.org/foo/bar
+      $ gpm local version     # Outputs version information
+      $ gpm local help        # Prints this message
+EOF
+}
+
+# 用于检查路径
+case "`uname`" in
+    CYGWIN*|MINGW*) cygwin=true ;;
+    *) cygwin=false ;;
+esac
+
+usage_name() {
+cat << EOF
+
+Set the package name for the local package.
+
+USAGE
+    $ gpm local name PACKAGE_NAME     
+
+    PACKAGE_NAME is required.
+EOF
+}
+
+## Command Line Parsing
+case "${1:-"name"}" in
+  "version")
+    echo ">> gpm-local v1.0.0"
+    ;;
+  "name")
+    [[ "${2:-""}" == "" ]] && usage_name && exit 1
+    if $cygwin
+    then
+        LX_GOPATH=`cygpath -up "$GOPATH"`
+    fi
+
+    ln_path="${LX_GOPATH%%:*}/src/${2}"
+#    ln_base=$(dirname "${LX_GOPATH%%:*}")
+    ln_base=$(pwd)
+    echo ">> Linking $ln_base to $ln_path"
+    mkdir -p $(dirname "$ln_path")
+    ln -s "$ln_base" "$ln_path"
+    ;;
+  "to")
+    [[ "${2:-""}" == "" ]] && usage_name && exit 1
+
+    if $cygwin
+    then
+        LX_GOPATH=`cygpath -up "$GOPATH"`
+        TARGET_PATH=`cygpath -u ${2}`
+    fi
+
+    if [ -z "${TARGET_PATH##*/}" ]
+    then
+        echo "Use target absolute path like windows path: c:\\xxx\\xxx\\package or linux path: /tmp/xxx/xxx/package"
+        exit 1
+    fi
+
+    ln_path="${LX_GOPATH%%:*}/src/${TARGET_PATH##*/}"
+#    ln_base=$(dirname "${LX_GOPATH%%:*}")
+    ln_base=${TARGET_PATH}
+    echo ">> Linking $ln_base to $ln_path"
+    mkdir -p $(dirname "$ln_path")
+    ln -s "$ln_base" "$ln_path"
+    ;;
+  "help")
+    usage
+    ;;
+  *)
+    usage && exit 1
+    ;;
+esac
