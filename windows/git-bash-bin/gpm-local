@@ -68,7 +68,15 @@ case "${1:-"name"}" in
     ln_base=$(dirname "${LX_GOPATH%%:*}")
     echo ">> Linking $ln_base to $ln_path"
     mkdir -p $(dirname "$ln_path")
-    ln -s "$ln_base" "$ln_path"
+
+    if $cygwin
+    then
+      LK=`cygpath -w "$ln_path"`
+      TR=`cygpath -w "$ln_base"`
+      cmd <<< "mklink /J ${LK} ${TR}" > /dev/null
+    else
+       ln -s "$ln_base" "$ln_path"
+    fi
     ;;
   "name")
     [[ "${2:-""}" == "" ]] && usage_name && exit 1
@@ -82,7 +90,16 @@ case "${1:-"name"}" in
     ln_base=$(pwd)
     echo ">> Linking $ln_base to $ln_path"
     mkdir -p $(dirname "$ln_path")
-    ln -s "$ln_base" "$ln_path"
+
+    if $cygwin
+    then
+      LK=`cygpath -w "$ln_path"`
+      TR=`cygpath -w "$ln_base"`
+      cmd <<< "mklink /J ${LK} ${TR}" > /dev/null
+    else
+       ln -s "$ln_base" "$ln_path"
+    fi
+
     ;;
   "to")
     [[ "${2:-""}" == "" ]] && usage_name && exit 1
@@ -104,7 +121,16 @@ case "${1:-"name"}" in
     ln_base=${TARGET_PATH}
     echo ">> Linking $ln_base to $ln_path"
     mkdir -p $(dirname "$ln_path")
-    ln -s "$ln_base" "$ln_path"
+
+    if $cygwin
+    then
+      LK=`cygpath -w "$ln_path"`
+      TR=`cygpath -w "$ln_base"`
+      cmd <<< "mklink /J ${LK} ${TR}" > /dev/null
+    else
+       ln -s "$ln_base" "$ln_path"
+    fi
+
     ;;
   "help")
     usage
